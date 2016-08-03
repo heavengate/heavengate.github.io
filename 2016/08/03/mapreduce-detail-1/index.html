@@ -90,7 +90,7 @@
 <meta property="og:url" content="http://www.heavengate.site/2016/08/03/mapreduce-detail-1/index.html">
 <meta property="og:site_name" content="Heavengate的小站">
 <meta property="og:description" content="概述 MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。 Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。 对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地">
-<meta property="og:updated_time" content="2016-08-03T13:29:35.000Z">
+<meta property="og:updated_time" content="2016-08-03T13:30:56.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MapReduce运行过程详解——Map端">
 <meta name="twitter:description" content="概述 MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。 Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。 对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地">
@@ -334,8 +334,8 @@
 </ul>
 </li>
 <li><p>MapOutputBuffer<br> 在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。<br> 有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。</p>
- <!-- ![MapOutputBuffer]("/images/kvbuffer.png") -->
- <!-- ![After Sort]("/images/kvbuffer_after_sort.png") -->
+ <!-- ![MapOutputBuffer](/images/kvbuffer.png "MapOutputBuffer") -->
+ <!-- ![Sort](/images/kvbuffer_after_sort.png "Sort") -->
 </li>
 <li><p>总结<br> 上面主要介绍了一下Map阶段的程序执行细节，Map最后输出了spill.out和spill.out.index两个文件，那么Reduce又是怎么具体执行的呢，且听下回分解</p>
 </li>
