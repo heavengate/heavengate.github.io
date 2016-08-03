@@ -92,7 +92,7 @@
 <meta property="og:site_name" content="Heavengate的小站">
 <meta property="og:description" content="1. 概述　　上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。
 2. 获取数据　　Reduce任务首先要从各个Map端获取数据，则在ReduceTa">
-<meta property="og:updated_time" content="2016-08-03T13:43:39.000Z">
+<meta property="og:updated_time" content="2016-08-03T13:47:09.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="MapReduce运行过程详解——Reduce端">
 <meta name="twitter:description" content="1. 概述　　上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。
@@ -316,12 +316,20 @@
 
       
         <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。</p>
-<h2 id="2-获取数据"><a href="#2-获取数据" class="headerlink" title="2. 获取数据"></a>2. 获取数据</h2><p>　　Reduce任务首先要从各个Map端获取数据，则在ReduceTask执行开始会构建Reducecopier对象，并调用其fetchOutputs()方法。fetchOutputs()方法会构建如下几个线程：<br>　　<em> GetMapEventsThread线程通过RPC询问TaskTracker，对每个完成的MapEvent，获取MapTask所在的服务器地址，即MapTask输出的地址，构造URL，加入到mapLocations，供copier线程获取
-　　</em> 若干个MapOutputCopier线程，从mapLocation中获取URL，通过http协议，把map的输出从远端服务器拷贝的本地，如果可以放在内存中，则存储在内存中调用，否则保存在本地文件<br>　　<em> InMemFSMergeThread对内存中的数据进行归并
-　　</em> LocalFSMerger对磁盘上的数据进行归并</p>
-<h2 id="3-Merge阶段"><a href="#3-Merge阶段" class="headerlink" title="3. Merge阶段"></a>3. Merge阶段</h2><p>　　Reduce端的Merge过程比较复杂，分为InMemoryMerge、DiskMerge和FinalMerge。<br>　　首先，当Reduce端的内存够用时，会先将Map输出读入到Reduce端的内存中，当内存占用达到一定程度时触发InMemoryMerge，其内存大小与如下几个参数有关：<br>　　<em> mapreduce.reduce.shuffle.input.buffer.percent: copy阶段能使用的最大内存占总内存的百分比，默认为0.9
-　　</em> mapreduce.reduce.shuffle.memory.limit.percent: 每个fetch取到的数据能使用的可用内存的百分比，默认0.25<br>　　<em> mapreduce.reduce.shuffle.merge.percent: 触发InMemoryMerge是数据占最大可用内存的百分比，默认为0.9
-　　</em> mapreduce.reduce.merge.memtomem.enabled: 是否开启InMemoryMerge，默认为false<br>　　ImMemoryMerge会对key进行排序，同时如果设置了Combiner，会调用Combine函数，Merge结果溢写到本次磁盘。<br>　　当本地磁盘的文件数据超过阈值时会触发DiskMerge，Merge过程与InMemoryMerge类似。<br>　　最后，当所有的DiskMerge结束会进行FinalMerge，FinalMerge将内存中的数据和磁盘文件数据整合为一个Merge 　　List一次读入进行Merge，Merge持续到剩余文件数小于设定阈值位置，不必Merge为一个文件。</p>
+<h2 id="2-获取数据"><a href="#2-获取数据" class="headerlink" title="2. 获取数据"></a>2. 获取数据</h2><p>　　Reduce任务首先要从各个Map端获取数据，则在ReduceTask执行开始会构建Reducecopier对象，并调用其fetchOutputs()方法。fetchOutputs()方法会构建如下几个线程：</p>
+<ul>
+<li>GetMapEventsThread线程通过RPC询问TaskTracker，对每个完成的MapEvent，获取MapTask所在的服务器地址，即MapTask输出的地址，构造URL，加入到mapLocations，供copier线程获取</li>
+<li>若干个MapOutputCopier线程，从mapLocation中获取URL，通过http协议，把map的输出从远端服务器拷贝的本地，如果可以放在内存中，则存储在内存中调用，否则保存在本地文件</li>
+<li>InMemFSMergeThread对内存中的数据进行归并</li>
+<li>LocalFSMerger对磁盘上的数据进行归并</li>
+</ul>
+<h2 id="3-Merge阶段"><a href="#3-Merge阶段" class="headerlink" title="3. Merge阶段"></a>3. Merge阶段</h2><p>　　Reduce端的Merge过程比较复杂，分为InMemoryMerge、DiskMerge和FinalMerge。<br>　　首先，当Reduce端的内存够用时，会先将Map输出读入到Reduce端的内存中，当内存占用达到一定程度时触发InMemoryMerge，其内存大小与如下几个参数有关：</p>
+<ul>
+<li>mapreduce.reduce.shuffle.input.buffer.percent: copy阶段能使用的最大内存占总内存的百分比，默认为0.9</li>
+<li>mapreduce.reduce.shuffle.memory.limit.percent: 每个fetch取到的数据能使用的可用内存的百分比，默认0.25</li>
+<li>mapreduce.reduce.shuffle.merge.percent: 触发InMemoryMerge是数据占最大可用内存的百分比，默认为0.9</li>
+<li>mapreduce.reduce.merge.memtomem.enabled: 是否开启InMemoryMerge，默认为false<br>　　ImMemoryMerge会对key进行排序，同时如果设置了Combiner，会调用Combine函数，Merge结果溢写到本次磁盘。<br>　　当本地磁盘的文件数据超过阈值时会触发DiskMerge，Merge过程与InMemoryMerge类似。<br>　　最后，当所有的DiskMerge结束会进行FinalMerge，FinalMerge将内存中的数据和磁盘文件数据整合为一个Merge 　　List一次读入进行Merge，Merge持续到剩余文件数小于设定阈值位置，不必Merge为一个文件。</li>
+</ul>
 <h2 id="4-Reduce执行阶段"><a href="#4-Reduce执行阶段" class="headerlink" title="4. Reduce执行阶段"></a>4. Reduce执行阶段</h2><p>　　Merge完成后会将剩余数据构造成一个Raw Key-value的迭代器，依次出入给Reduce进行处理，处理结果写到HDFS中。<br>　　Reduce处理过程同样包含setup(), run(), clean()三个函数。</p>
 <h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>　　至此，MapReduce的执行细节整理结束，博主曾经在百度的面试中被问到过一次，然而楼主刚说完Map的执行过程就被面试官打断了。<br>　　其实以上这些细节仍然比较粗泛，若现真正理解MapReduce的过程需要读一读其Java源码，希望这次总结对大家有所帮助。</p>
 
