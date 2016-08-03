@@ -318,32 +318,25 @@
       
         
           
-            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><pre><code>MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。
-Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。
-对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地讲解一下MapReduce的执行细节，理解程序的执行细节，能帮助我们更好的编写程序和优化程序。
-这篇博客主要讲解Map阶段程序流程，主要分为四个方面，split划分，Map执行和执行后的shuffle阶段，MapOutputBuffer的结构。
-</code></pre><h2 id="2-split划分"><a href="#2-split划分" class="headerlink" title="2. split划分"></a>2. split划分</h2><pre><code>大数据文件存在分布式系统（HDFS）上是一块（block）为单位存储的，当Map任务需要读取这些文件时，会从这些block中读取文件形成一个个的split，而后由split的数目确定Mapper的个数。
-其中split的划分主要与以下三个参数有关：
-* mapred.min.split.size.per.node: 一个节点上split的最小大小
-* mapred.min.split.size.per.rack: 一个交换机上split的最小大小
-* mapred.max.split.size: 每个split的最大大小，一般是以blockSize为单位
-在划分过程中，首先对于每一个输入文件，若其大小大于mapred.max.split.size，则对其进行划分，每个split的大小为mapred.max.split.size，对于划分剩余的部分，若其大于mapred.min.split.size.per.node，即一个节点上split的最小大小，则将其划分为一个split，否则先作为碎片保留。
-当一个rack下的各个node都划分好后，将每个节点上的碎片整合到一起，若大于mapred.max.split.size，则按mapred.max.split.size划分，对于剩余部分，若大于mapred.min.split.size.per.rack则划分为一个split，否则最为碎片保留
-最后将不同rack的碎片整合，长度超过apred.max.split.size则按mapred.max.split.size划分，剩下部分强制划分为一个split
-</code></pre><h2 id="3-Map阶段"><a href="#3-Map阶段" class="headerlink" title="3. Map阶段"></a>3. Map阶段</h2><pre><code>split划分好后，一般每个Map对应一个split，Map会读入对应的split，在Map线程的run()方法中，会首先调用setup()方法，加载相关资源，然后调用map()方法处理数据直到处理完成，最后调用clean()方法回收相关资源。
-在设置了Reduce时，Map的输出写入本地磁盘，而在Map输出写入到本次磁盘之前，会现有一个Map Shuffle过程，其写文件过程我们一般称之为溢写（spill）。
-</code></pre><h2 id="4-Map-Shuffle"><a href="#4-Map-Shuffle" class="headerlink" title="4. Map Shuffle"></a>4. Map Shuffle</h2><pre><code>Map的Shuffle过程主要分为如下几步:
-* 子进程在runNewMapper时，设置output为NewOutputCollector，map方法最后调用TaskInputOutputContext的write方法调用NewOutputCollector的write方法,NewOutputCollector为MapOutputBuffer的封装，write调用MapOutputBuffer的collect方法
-* collect方法将(k, v)写入环形缓存，环形内存大小默认为100MB，可设置。缓存快满时（默认情况下为缓存占用了0.8时，可设置）调用startSpill设置信号量，开启SpillThread
-* SpillThread的run()方法调用sortAndSpill()溢写文件，sortAndSpill()，会先对(k,v)对的partition进行排序，partition排序完成后对key进行排序，由于MapOutputBuffer的特殊结构，其排序只需要改变索引就可以完成
-* 在排序过程中，若用户设置的Combiner，此时会调用Combine方法对同一key的value值做处理，然后溢写为文件，一次溢写会有两个文件，分别为存储数据的spill.out和存储排序索引的spill.out.index
-* 当Map输出完成后，output的close()方法会调用MapOutputBuffer的flush()方法将环形内存里的剩余数据溢写为文件，最后调用mergeParts()方法合并所有的溢写文件，merge过程中也会对partiton，key进行排序，并调用Combine整合，最后输出两个文件: spill.out（存储数据）、spill.out.index（存储partition的偏移量）
-</code></pre><h2 id="5-MapOutputBuffer"><a href="#5-MapOutputBuffer" class="headerlink" title="5. MapOutputBuffer"></a>5. MapOutputBuffer</h2><pre><code>在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。
-有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。
-![MapOutputBuffer](/source/images/kvbuffer.png &quot;图1. MapOutputBuffer存储结构&quot;)
-![Sort](/source/images/kvbuffer_after_sort.png &quot;图2. 排序前后示意图&quot;)
-</code></pre><h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6. 总结"></a>6. 总结</h2><pre><code>上面主要介绍了一下Map阶段的程序执行细节，Map最后输出了spill.out和spill.out.index两个文件，那么Reduce又是怎么具体执行的呢，且听下回分解
-</code></pre>
+            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。<br>Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。<br>对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地讲解一下MapReduce的执行细节，理解程序的执行细节，能帮助我们更好的编写程序和优化程序。<br>这篇博客主要讲解Map阶段程序流程，主要分为四个方面，split划分，Map执行和执行后的shuffle阶段，MapOutputBuffer的结构。</p>
+<h2 id="2-split划分"><a href="#2-split划分" class="headerlink" title="2. split划分"></a>2. split划分</h2><p>大数据文件存在分布式系统（HDFS）上是一块（block）为单位存储的，当Map任务需要读取这些文件时，会从这些block中读取文件形成一个个的split，而后由split的数目确定Mapper的个数。<br>其中split的划分主要与以下三个参数有关：</p>
+<ul>
+<li>mapred.min.split.size.per.node: 一个节点上split的最小大小</li>
+<li>mapred.min.split.size.per.rack: 一个交换机上split的最小大小</li>
+<li>mapred.max.split.size: 每个split的最大大小，一般是以blockSize为单位<br>在划分过程中，首先对于每一个输入文件，若其大小大于mapred.max.split.size，则对其进行划分，每个split的大小为mapred.max.split.size，对于划分剩余的部分，若其大于mapred.min.split.size.per.node，即一个节点上split的最小大小，则将其划分为一个split，否则先作为碎片保留。<br>当一个rack下的各个node都划分好后，将每个节点上的碎片整合到一起，若大于mapred.max.split.size，则按mapred.max.split.size划分，对于剩余部分，若大于mapred.min.split.size.per.rack则划分为一个split，否则最为碎片保留<br>最后将不同rack的碎片整合，长度超过apred.max.split.size则按mapred.max.split.size划分，剩下部分强制划分为一个split</li>
+</ul>
+<h2 id="3-Map阶段"><a href="#3-Map阶段" class="headerlink" title="3. Map阶段"></a>3. Map阶段</h2><p>split划分好后，一般每个Map对应一个split，Map会读入对应的split，在Map线程的run()方法中，会首先调用setup()方法，加载相关资源，然后调用map()方法处理数据直到处理完成，最后调用clean()方法回收相关资源。<br>在设置了Reduce时，Map的输出写入本地磁盘，而在Map输出写入到本次磁盘之前，会现有一个Map Shuffle过程，其写文件过程我们一般称之为溢写（spill）。</p>
+<h2 id="4-Map-Shuffle"><a href="#4-Map-Shuffle" class="headerlink" title="4. Map Shuffle"></a>4. Map Shuffle</h2><p>Map的Shuffle过程主要分为如下几步:</p>
+<ul>
+<li>子进程在runNewMapper时，设置output为NewOutputCollector，map方法最后调用TaskInputOutputContext的write方法调用NewOutputCollector的write方法,NewOutputCollector为MapOutputBuffer的封装，write调用MapOutputBuffer的collect方法</li>
+<li>collect方法将(k, v)写入环形缓存，环形内存大小默认为100MB，可设置。缓存快满时（默认情况下为缓存占用了0.8时，可设置）调用startSpill设置信号量，开启SpillThread</li>
+<li>SpillThread的run()方法调用sortAndSpill()溢写文件，sortAndSpill()，会先对(k,v)对的partition进行排序，partition排序完成后对key进行排序，由于MapOutputBuffer的特殊结构，其排序只需要改变索引就可以完成</li>
+<li>在排序过程中，若用户设置的Combiner，此时会调用Combine方法对同一key的value值做处理，然后溢写为文件，一次溢写会有两个文件，分别为存储数据的spill.out和存储排序索引的spill.out.index</li>
+<li>当Map输出完成后，output的close()方法会调用MapOutputBuffer的flush()方法将环形内存里的剩余数据溢写为文件，最后调用mergeParts()方法合并所有的溢写文件，merge过程中也会对partiton，key进行排序，并调用Combine整合，最后输出两个文件: spill.out（存储数据）、spill.out.index（存储partition的偏移量）</li>
+</ul>
+<h2 id="5-MapOutputBuffer"><a href="#5-MapOutputBuffer" class="headerlink" title="5. MapOutputBuffer"></a>5. MapOutputBuffer</h2><p>在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。<br>有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。<br><img src="/source/images/kvbuffer.png" alt="MapOutputBuffer" title="图1. MapOutputBuffer存储结构"><br><img src="/source/images/kvbuffer_after_sort.png" alt="Sort" title="图2. 排序前后示意图"></p>
+<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6. 总结"></a>6. 总结</h2><p>上面主要介绍了一下Map阶段的程序执行细节，Map最后输出了spill.out和spill.out.index两个文件，那么Reduce又是怎么具体执行的呢，且听下回分解</p>
+
           
         
       
@@ -462,26 +455,24 @@ Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现
       
         
           
-            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><pre><code>上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。
-</code></pre><h2 id="2-获取数据"><a href="#2-获取数据" class="headerlink" title="2. 获取数据"></a>2. 获取数据</h2><pre><code>Reduce任务首先要从各个Map端获取数据，则在ReduceTask执行开始会构建Reducecopier对象，并调用其fetchOutputs()方法。fetchOutputs()方法会构建如下几个线程：
-* GetMapEventsThread线程通过RPC询问TaskTracker，对每个完成的MapEvent，获取MapTask所在的服务器地址，即MapTask输出的地址，构造URL，加入到mapLocations，供copier线程获取
-* 若干个MapOutputCopier线程，从mapLocation中获取URL，通过http协议，把map的输出从远端服务器拷贝的本地，如果可以放在内存中，则存储在内存中调用，否则保存在本地文件
-* InMemFSMergeThread对内存中的数据进行归并
-* LocalFSMerger对磁盘上的数据进行归并
-</code></pre><h2 id="3-Merge阶段"><a href="#3-Merge阶段" class="headerlink" title="3. Merge阶段"></a>3. Merge阶段</h2><pre><code>Reduce端的Merge过程比较复杂，分为InMemoryMerge、DiskMerge和FinalMerge。
-首先，当Reduce端的内存够用时，会先将Map输出读入到Reduce端的内存中，当内存占用达到一定程度时触发InMemoryMerge，其内存大小与如下几个参数有关：
-* mapreduce.reduce.shuffle.input.buffer.percent: copy阶段能使用的最大内存占总内存的百分比，默认为0.9
-* mapreduce.reduce.shuffle.memory.limit.percent: 每个fetch取到的数据能使用的可用内存的百分比，默认0.25
-* mapreduce.reduce.shuffle.merge.percent: 触发InMemoryMerge是数据占最大可用内存的百分比，默认为0.9
-* mapreduce.reduce.merge.memtomem.enabled: 是否开启InMemoryMerge，默认为false
-ImMemoryMerge会对key进行排序，同时如果设置了Combiner，会调用Combine函数，Merge结果溢写到本次磁盘。
-当本地磁盘的文件数据超过阈值时会触发DiskMerge，Merge过程与InMemoryMerge类似。
-最后，当所有的DiskMerge结束会进行FinalMerge，FinalMerge将内存中的数据和磁盘文件数据整合为一个Merge List一次读入进行Merge，Merge持续到剩余文件数小于设定阈值位置，不必Merge为一个文件。
-</code></pre><h2 id="4-Reduce执行阶段"><a href="#4-Reduce执行阶段" class="headerlink" title="4. Reduce执行阶段"></a>4. Reduce执行阶段</h2><pre><code>Merge完成后会将剩余数据构造成一个Raw Key-value的迭代器，依次出入给Reduce进行处理，处理结果写到HDFS中。
-Reduce处理过程同样包含setup(), run(), clean()三个函数。
-</code></pre><h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><pre><code>至此，MapReduce的执行细节整理结束，博主曾经在百度的面试中被问到过一次，然而楼主刚说完Map的执行过程就被面试官打断了。
-其实以上这些细节仍然比较粗泛，若现真正理解MapReduce的过程需要读一读其Java源码，希望这次总结对大家有所帮助。
-</code></pre>
+            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。</p>
+<h2 id="2-获取数据"><a href="#2-获取数据" class="headerlink" title="2. 获取数据"></a>2. 获取数据</h2><p>Reduce任务首先要从各个Map端获取数据，则在ReduceTask执行开始会构建Reducecopier对象，并调用其fetchOutputs()方法。fetchOutputs()方法会构建如下几个线程：</p>
+<ul>
+<li>GetMapEventsThread线程通过RPC询问TaskTracker，对每个完成的MapEvent，获取MapTask所在的服务器地址，即MapTask输出的地址，构造URL，加入到mapLocations，供copier线程获取</li>
+<li>若干个MapOutputCopier线程，从mapLocation中获取URL，通过http协议，把map的输出从远端服务器拷贝的本地，如果可以放在内存中，则存储在内存中调用，否则保存在本地文件</li>
+<li>InMemFSMergeThread对内存中的数据进行归并</li>
+<li>LocalFSMerger对磁盘上的数据进行归并</li>
+</ul>
+<h2 id="3-Merge阶段"><a href="#3-Merge阶段" class="headerlink" title="3. Merge阶段"></a>3. Merge阶段</h2><p>Reduce端的Merge过程比较复杂，分为InMemoryMerge、DiskMerge和FinalMerge。<br>首先，当Reduce端的内存够用时，会先将Map输出读入到Reduce端的内存中，当内存占用达到一定程度时触发InMemoryMerge，其内存大小与如下几个参数有关：</p>
+<ul>
+<li>mapreduce.reduce.shuffle.input.buffer.percent: copy阶段能使用的最大内存占总内存的百分比，默认为0.9</li>
+<li>mapreduce.reduce.shuffle.memory.limit.percent: 每个fetch取到的数据能使用的可用内存的百分比，默认0.25</li>
+<li>mapreduce.reduce.shuffle.merge.percent: 触发InMemoryMerge是数据占最大可用内存的百分比，默认为0.9</li>
+<li>mapreduce.reduce.merge.memtomem.enabled: 是否开启InMemoryMerge，默认为false<br>ImMemoryMerge会对key进行排序，同时如果设置了Combiner，会调用Combine函数，Merge结果溢写到本次磁盘。<br>当本地磁盘的文件数据超过阈值时会触发DiskMerge，Merge过程与InMemoryMerge类似。<br>最后，当所有的DiskMerge结束会进行FinalMerge，FinalMerge将内存中的数据和磁盘文件数据整合为一个Merge List一次读入进行Merge，Merge持续到剩余文件数小于设定阈值位置，不必Merge为一个文件。</li>
+</ul>
+<h2 id="4-Reduce执行阶段"><a href="#4-Reduce执行阶段" class="headerlink" title="4. Reduce执行阶段"></a>4. Reduce执行阶段</h2><p>Merge完成后会将剩余数据构造成一个Raw Key-value的迭代器，依次出入给Reduce进行处理，处理结果写到HDFS中。<br>Reduce处理过程同样包含setup(), run(), clean()三个函数。</p>
+<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>至此，MapReduce的执行细节整理结束，博主曾经在百度的面试中被问到过一次，然而楼主刚说完Map的执行过程就被面试官打断了。<br>其实以上这些细节仍然比较粗泛，若现真正理解MapReduce的过程需要读一读其Java源码，希望这次总结对大家有所帮助。</p>
+
           
         
       
