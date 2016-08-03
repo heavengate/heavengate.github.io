@@ -339,7 +339,7 @@
 <li>当Map输出完成后，output的close()方法会调用MapOutputBuffer的flush()方法将环形内存里的剩余数据溢写为文件，最后调用mergeParts()方法合并所有的溢写文件，merge过程中也会对partiton，key进行排序，并调用Combine整合，最后输出两个文件: spill.out（存储数据）、spill.out.index（存储partition的偏移量）</li>
 </ul>
 </li>
-<li><p>MapOutputBuffer<br> 在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。<br> 有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。</p>
+<li><p>MapOutputBuffer<br> 在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。<br> 有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。<br> <img src="/images/kvbuffer.png" alt="MapOutputBuffer"><br> <img src="/images/kvbuffer_after_sort.png" alt="After Sort"></p>
 </li>
 <li><p>总结<br> 上面主要介绍了一下Map阶段的程序执行细节，Map最后输出了spill.out和spill.out.index两个文件，那么Reduce又是怎么具体执行的呢，且听下回分解</p>
 </li>
