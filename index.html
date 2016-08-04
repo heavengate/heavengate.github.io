@@ -317,22 +317,12 @@
 
       
         
-          
-            <p>　　之前找了学长内推，这周一去百度上海研发中心面试算法岗，面前网上找了些百度上海研发中心往届招聘的JD，大致知道他们对Hadoop有要求，并且业务主方向是CTR。<br>　　早上十点的面试，总共三面，持续到中午十二点，基本无间歇，强度还是有点小高的。最后三面说这是最后一面了，后面有消息HR会联系你，然而到现在还没收到消息，不知到底什么情况。<br>　　这里简单总结一下面经，记录下面试里面学到的一些东西，也希望能对后面的学弟学妹有些帮助。</p>
-<pre><code>&lt;!-- more --&gt;
-</code></pre><h2 id="一面"><a href="#一面" class="headerlink" title="一面"></a>一面</h2><p>　　面试通知让我到研发大楼到前台让联系指定的人，看到下来的是个女员工以为是HR，没想到是我一面的面试官，上去之后就拿上电脑开始了一面。<br>　　她们工作貌似很忙，面试全称都在电脑上办公的样子，自我介绍之后让我说一下项目，我就说了我在做的携程暑期实习，重点说了一下项目调优过程中做的一些工作，由于这个项目是用GBDT做的，她中间还穿插这问了一些GBDT的基础知识，比如GBDT节点是按什么分割的，GBDT训练的终止条件是什么之类的。我第二个项目说到一半她就打断我了，说先做道题吧，问了一下你数据结构，操作系统啥的都会吧，然后出了一道两个排序链表合并的题，她想让我用C++写，我说C++好长时间没用，最后用Java写的，比较简单，写完之后给她解释了一下。<br>　　然后她看了看我的简历，看到我用过Hive，就让我写一下找到key相同记录里id最小的所有记录。这题里面实际上有个小陷阱，Hive是不支持in/exist子查询的，我之前系统学习Hive的时候注意过，然后当时为了装13还强行用左半开连接（LEFT SEMI JOIN）来做，好在没有装13失败。<br>　　最后她让我解释一下LR，这个之前面试的时候被问到好多次了，就把LR给推了一遍，然后她问我你不加范数约束吗，我说你说正则化是吧，可以对损失函数加范数约束，一般是L1范数和L2范数用得比较多，其中L1范数能够做特征选择，它是L0范数的最佳凸近似，L2范数可以做权值衰减，会将权值约束到较小防止过拟合，但不会约束到零。她后面就没问什么问题，我还强行解释了一下LR的随机梯度下降法的优化以及随机梯度下降法收敛波动的消除（时序减小学习率、每次训练打乱样本）。<br>    最后她问我有什么问题，我确认了一下她们是做CTR的，然后就说了一下之前看到的Google用特征离散化和LR做CTR的资料，总感觉我在尽一切可能说东西……。最后她让我等一下，她去叫下一个考官，我当时就知道一面应该是过了。</p>
-<h2 id="二面"><a href="#二面" class="headerlink" title="二面"></a>二面</h2><p>　　二面来的是个男的，年纪不大，应该毕业没几年。我自我介绍要介绍项目的时候，他说项目先等会吧，我们先做道题，然后出了一道旋转后的非降序数组里找数的问题，我开始以为他要我算旋转量，这个是剑指offer上的原题，就噼里啪啦写了，然后他对我的解法能困惑，我解释了一通后才知道他让我找数。然后这儿就是面试里最大的败笔，我想一步二分把数找出来，结果被里面的逻辑绕得有点乱，最后写出来的东西还有些瑕疵，不过我解释了一下我的思路，最后程序也算写出来了，他也没说什么。<br>　　然后他开始问项目，这个自然没什么问题，问完项目之后他看了一下我简历里Hadoop/Hive写的是熟练，他问我Hadoop是很熟还是只是用过，我说我挺熟的，比如MapReduce的执行顺序的细节我能捋出来，他说你说说。然后我就从split划分的参数开始说起，他嫌太慢，说不用这么细，说点宏观的，然后我就带过设置参数开始说split划分原理，吧啦吧啦地说Map的执行和Shuffle，具体内容可以参考我之前的两篇博客<a href="http://www.heavengate.site/2016/08/03/mapreduce-detail-1/" title="MapReduce运行过程详解——Map端">MapReduce运行过程详解——Map端</a>和<a href="http://www.heavengate.site/2016/08/03/mapreduce-detail-2/" title="MapReduce运行过程详解——Reduce端">MapReduce运行过程详解——Reduce端</a>。Map端刚说完要说Reduce的时候他就打断我说行了，后面不用说了。<br>　　之后他问我有没有什么问题，我就问了下你们CTR都是用LR做的么，他说一部分LR一部分Deep Learning然后跟我解释了一下，最后让我在原地等下一个考官。</p>
-<h2 id="三面"><a href="#三面" class="headerlink" title="三面"></a>三面</h2><p>　　三面来的一个男考官大概有30多岁的样子，应该是级别比较高的大牛，自我介绍问了一下项目之后，就开始问了我一个非常抽象的问题“你说一下你对数据、模型、特征三个之间关系的理解”，博主当时就有点懵，不过硬着头皮开始逼到，说到很多他都不置可否，说到我携程暑期实习初期采用的其他模型，我说其他模型没怎么调优就放弃了，好像目前国内分类这块准确率高一些的就是XGBoost的GBDT，他不以为然，问我你SVM用的什么核， 我说没用核，线性的，他就说那你这样比就不公平，我说也对，SVM的精髓就在核上，SVM比较适合处理特征比较多，样本比较少的分类，他当时就反对了，说你说SVM适合处理啥，我才意识到口误了，赶紧解释说我是说SVM能把特征用核映射到高维才比较多。他好像来了兴趣，说那我们就来个free talk吧，然后开始历数和分析目前用的多的几个模型，自此开始面试得节奏完全是他带着走……。后来基本上是他在说，我适当的时机插上几句嘴，总体来说我觉得我的表现应该还行，毕竟他level高我太多，又一次碰到大神级人物了。<br>　　不过话说回来，我这次面试得最大收获就是从这位考官高屋建瓴的分析上了，这里也简单总结一下他的观点，我觉得对于现在得我帮助很大。</p>
-<ul>
-<li>当数据量比较大的时候，并不是说各种模型效果都差不多，当数据量比较大的时候能够有更多的样本去逼近函数，那么复杂的模型就比较有有优势，之所以Google之前CTR用LR一方面是因为LR训练快，但是Google在特征上离散到几亿维，就从特征的维度上增大了模型的复杂度，这些特征处理的trick在大数据量训练里是非常有用的</li>
-<li>在大规模机器学习中，特征的标准化会对模型效果产生很大的影响，不同的标准化策略可能得到完全不一样的效果，这里面的trick也有很多，GBDT不用太过关心标准化是因为树模型都是基于split的，标不标准化影响相对不大。但是话说回来，GBDT适合处理连续性变量，对于0-1分类变量或者哑编码变量比较无力，这个是模型原理决定的，目前没有比较好的解决办法</li>
-<li>GBDT的训练和输出比较慢，不在适合在线实时系统，这也是CTR普遍采用LR之类的模型的原因，同时GBDT模型的扩展也比较困难，如果是连续变量的话还好，范围变化模型还是可以用，只是可能对效果有影响，而对于哑编码，如果出现新的分类就不太好处理，一般只能重新训练，比较麻烦。</li>
-<li>Google用LR做CTR只是12年发的论文，是它至少10年前的技术了，我相信Google现在用的也是DL，DL的参数调整比较麻烦，不同的参数处理和特征处理的trick对模型的影响很大，这里面的东西还是很多的，但是参数多某种程度上来说也是好事，有的调总比没的调好。</li>
-</ul>
-<p>　　以上内容基本覆盖这位大神的free talk和对我最后问题的回应，听下来有种茅塞顿开的感觉，让我对我以后的发展方向有了更深的理解，这也是我这次面试的最大收获。</p>
-<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>　　总的来说这次面试得表现我个人觉得还不错，虽然有很多地方本可以表现得更好一点，但毕竟是秋招的第一场面试，总体来说还是比较满意的，然而百度到现在还没有任何消息给我，让我心里还是方方哒，写下这篇面经，顺便祈祷一下能有好的结果吧。</p>
-
-          
+          <p>　　之前找了学长内推，这周一去百度上海研发中心面试算法岗，面前网上找了些百度上海研发中心往届招聘的JD，大致知道他们对Hadoop有要求，并且业务主方向是CTR。<br>　　早上十点的面试，总共三面，持续到中午十二点，基本无间歇，强度还是有点小高的。最后三面说这是最后一面了，后面有消息HR会联系你，然而到现在还没收到消息，不知到底什么情况。<br>　　这里简单总结一下面经，记录下面试里面学到的一些东西，也希望能对后面的学弟学妹有些帮助。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/08/04/interview-baidu-2016-8-1/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -449,27 +439,12 @@
 
       
         
-          
-            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。<br>　　Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。<br>　　对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地讲解一下MapReduce的执行细节，理解程序的执行细节，能帮助我们更好的编写程序和优化程序。<br>　　这篇博客主要讲解Map阶段程序流程，主要分为四个方面，split划分，Map执行和执行后的shuffle阶段，MapOutputBuffer的结构。</p>
-<pre><code>&lt;!-- more --&gt;
-</code></pre><h2 id="2-split划分"><a href="#2-split划分" class="headerlink" title="2. split划分"></a>2. split划分</h2><p>　　大数据文件存在分布式系统（HDFS）上是一块（block）为单位存储的，当Map任务需要读取这些文件时，会从这些block中读取文件形成一个个的split，而后由split的数目确定Mapper的个数。<br>　　其中split的划分主要与以下三个参数有关：</p>
-<pre><code>* mapred.min.split.size.per.node: 一个节点上split的最小大小
-* mapred.min.split.size.per.rack: 一个交换机上split的最小大小
-* mapred.max.split.size: 每个split的最大大小，一般是以blockSize为单位
-</code></pre><p>　　在划分过程中，首先对于每一个输入文件，若其大小大于mapred.max.split.size，则对其进行划分，每个split的大小为mapred.max.split.size，对于划分剩余的部分，若其大于mapred.min.split.size.per.node，即一个节点上split的最小大小，则将其划分为一个split，否则先作为碎片保留。<br>　　当一个rack下的各个node都划分好后，将每个节点上的碎片整合到一起，若大于mapred.max.split.size，则按mapred.max.split.size划分，对于剩余部分，若大于mapred.min.split.size.per.rack则划分为一个split，否则最为碎片保留。<br>　　最后将不同rack的碎片整合，长度超过apred.max.split.size则按mapred.max.split.size划分，剩下部分强制划分为一个split</p>
-<h2 id="3-Map阶段"><a href="#3-Map阶段" class="headerlink" title="3. Map阶段"></a>3. Map阶段</h2><p>　　split划分好后，一般每个Map对应一个split，Map会读入对应的split，在Map线程的run()方法中，会首先调用setup()方法，加载相关资源，然后调用map()方法处理数据直到处理完成，最后调用clean()方法回收相关资源。<br>　　在设置了Reduce时，Map的输出写入本地磁盘，而在Map输出写入到本次磁盘之前，会现有一个Map Shuffle过程，其写文件过程我们一般称之为溢写（spill）。</p>
-<h2 id="4-Map-Shuffle"><a href="#4-Map-Shuffle" class="headerlink" title="4. Map Shuffle"></a>4. Map Shuffle</h2><p>　　Map的Shuffle过程主要分为如下几步:</p>
-<ul>
-<li>子进程在runNewMapper时，设置output为NewOutputCollector，Map方法最后调用TaskInputOutputContext的write方法调用NewOutputCollector的write方法,NewOutputCollector为MapOutputBuffer的封装，write调用MapOutputBuffer的collect方法</li>
-<li>collect方法将(k, v)写入环形缓存，环形内存大小默认为100MB，可设置。缓存快满时（默认情况下为缓存占用了0.8时，可设置）调用startSpill设置信号量，开启SpillThread</li>
-<li>SpillThread的run()方法调用sortAndSpill()溢写文件，sortAndSpill()，会先对(k,v)对的partition进行排序，partition排序完成后对key进行排序，由于MapOutputBuffer的特殊结构，其排序只需要改变索引就可以完成</li>
-<li>在排序过程中，若用户设置的Combiner，此时会调用Combine方法对同一key的value值做处理，然后溢写为文件，一次溢写会有两个文件，分别为存储数据的spill.out和存储排序索引的spill.out.index</li>
-<li>当Map输出完成后，output的close()方法会调用MapOutputBuffer的flush()方法将环形内存里的剩余数据溢写为文件，最后调用mergeParts()方法合并所有的溢写文件，merge过程中也会对partiton，key进行排序，并调用Combine整合，最后输出两个文件: spill.out（存储数据）、spill.out.index（存储partition的偏移量）</li>
-</ul>
-<h2 id="5-MapOutputBuffer"><a href="#5-MapOutputBuffer" class="headerlink" title="5. MapOutputBuffer"></a>5. MapOutputBuffer</h2><p>　　在溢写过程中，需要对buffer里面的(k,v)进行排序，buffer里的数据结构如下图所示，其中kvoffsets存储索引值，其索引指向kvindices，kvindices主要有三个字段，分别记录数据的partition值，key的位置和value的位置，key和value指针指向kvbuffer为实际数据的存储位置。<br>　　有这样的三层结构，在spill过程中能只改变索引地址实现对数据的partition排序的key排序。<br><img src="/images/kvbuffer.png" alt="MapOutputBuffer" title="图1. MapOutputBuffer存储结构"><br><img src="/images/kvbuffer_after_sort.png" alt="Sort" title="图2. 排序前后示意图"></p>
-<h2 id="6-总结"><a href="#6-总结" class="headerlink" title="6. 总结"></a>6. 总结</h2><p>　　上面主要介绍了一下Map阶段的程序执行细节，Map最后输出了spill.out和spill.out.index两个文件，那么Reduce又是怎么具体执行的呢，且听下回分解。</p>
-
-          
+          <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　MapReduce是处理大规模数据并行计算的一种编程模型，通过实现Map（映射）函数和Reduce（归约）函数，能简单方便且逻辑清晰地实现可运行在分布式系统上的并行程序。<br>　　Hadoop提供支持多语言（Java，Python等） 的API，能方便用于实现MapReduce的逻辑，快速开发MapReduce程序。<br>　　对于MapReduce的执行大致过程，大部分人都能够说出来一二，这里就相对升入地讲解一下MapReduce的执行细节，理解程序的执行细节，能帮助我们更好的编写程序和优化程序。<br>　　这篇博客主要讲解Map阶段程序流程，主要分为四个方面，split划分，Map执行和执行后的shuffle阶段，MapOutputBuffer的结构。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/08/03/mapreduce-detail-1/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
@@ -586,26 +561,12 @@
 
       
         
-          
-            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。</p>
-<pre><code>&lt;!-- more --&gt;
-</code></pre><h2 id="2-获取数据"><a href="#2-获取数据" class="headerlink" title="2. 获取数据"></a>2. 获取数据</h2><p>　　Reduce任务首先要从各个Map端获取数据，则在ReduceTask执行开始会构建Reducecopier对象，并调用其fetchOutputs()方法。fetchOutputs()方法会构建如下几个线程：</p>
-<ul>
-<li>GetMapEventsThread线程通过RPC询问TaskTracker，对每个完成的MapEvent，获取MapTask所在的服务器地址，即MapTask输出的地址，构造URL，加入到mapLocations，供copier线程获取</li>
-<li>若干个MapOutputCopier线程，从mapLocation中获取URL，通过http协议，把map的输出从远端服务器拷贝的本地，如果可以放在内存中，则存储在内存中调用，否则保存在本地文件</li>
-<li>InMemFSMergeThread对内存中的数据进行归并</li>
-<li>LocalFSMerger对磁盘上的数据进行归并</li>
-</ul>
-<h2 id="3-Merge阶段"><a href="#3-Merge阶段" class="headerlink" title="3. Merge阶段"></a>3. Merge阶段</h2><p>　　Reduce端的Merge过程比较复杂，分为InMemoryMerge、DiskMerge和FinalMerge。<br>　　首先，当Reduce端的内存够用时，会先将Map输出读入到Reduce端的内存中，当内存占用达到一定程度时触发InMemoryMerge，其内存大小与如下几个参数有关：</p>
-<pre><code>* mapreduce.reduce.shuffle.input.buffer.percent: copy阶段能使用的最大内存占总内存的百分比，默认为0.9
-* mapreduce.reduce.shuffle.memory.limit.percent: 每个fetch取到的数据能使用的可用内存的百分比，默认0.25
-* mapreduce.reduce.shuffle.merge.percent: 触发InMemoryMerge是数据占最大可用内存的百分比，默认为0.9
-* mapreduce.reduce.merge.memtomem.enabled: 是否开启InMemoryMerge，默认为false
-</code></pre><p>　　ImMemoryMerge会对key进行排序，同时如果设置了Combiner，会调用Combine函数，Merge结果溢写到本次磁盘。<br>　　当本地磁盘的文件数据超过阈值时会触发DiskMerge，Merge过程与InMemoryMerge类似。<br>　　最后，当所有的DiskMerge结束会进行FinalMerge，FinalMerge将内存中的数据和磁盘文件数据整合为一个Merge 　　List一次读入进行Merge，Merge持续到剩余文件数小于设定阈值位置，不必Merge为一个文件。</p>
-<h2 id="4-Reduce执行阶段"><a href="#4-Reduce执行阶段" class="headerlink" title="4. Reduce执行阶段"></a>4. Reduce执行阶段</h2><p>　　Merge完成后会将剩余数据构造成一个Raw Key-value的迭代器，依次出入给Reduce进行处理，处理结果写到HDFS中。<br>　　Reduce处理过程同样包含setup(), run(), clean()三个函数。</p>
-<h2 id="5-总结"><a href="#5-总结" class="headerlink" title="5. 总结"></a>5. 总结</h2><p>　　至此，MapReduce的执行细节整理结束，博主曾经在百度的面试中被问到过一次，然而楼主刚说完Map的执行过程就被面试官打断了。<br>　　其实以上这些细节仍然比较粗泛，若现真正理解MapReduce的过程需要读一读其Java源码，希望这次总结对大家有所帮助。</p>
-
-          
+          <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　上一篇总结了Map端程序执行的细节，最后每个Map任务都生成了spill.out和spill.out.index两个文件存储于本地磁盘中等待Reduce任务获取并处理，今天主要介绍一下Reduce端的执行细节，Reduce端的执行相对简单一些，主要分为获取数据，Merge阶段和Reduce执行阶段。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/08/03/mapreduce-detail-2/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
