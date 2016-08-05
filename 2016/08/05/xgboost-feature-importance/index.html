@@ -90,7 +90,7 @@
 <meta property="og:url" content="http://www.heavengate.site/2016/08/05/xgboost-feature-importance/index.html">
 <meta property="og:site_name" content="Heavengate的小站">
 <meta property="og:description" content="1. 概述　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。　　今天主要通过python的源码解析一下XGBoost的特征重要性">
-<meta property="og:updated_time" content="2016-08-05T00:58:43.000Z">
+<meta property="og:updated_time" content="2016-08-05T01:39:36.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="XGBoost支持的特征重要性算法">
 <meta name="twitter:description" content="1. 概述　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。　　今天主要通过python的源码解析一下XGBoost的特征重要性">
@@ -346,8 +346,71 @@ fmap: str (optional)
 <li>gain: 特征在所有树中出现对于模型的平均提升（Gini不纯度增益）</li>
 <li>cover: 特征在所有树中平均覆盖的样本数</li>
 </ul>
-<h2 id="3-Model保存格式"><a href="#3-Model保存格式" class="headerlink" title="3. Model保存格式"></a>3. Model保存格式</h2><p>　　在XGBoost中计算特征重要性时，get_score()会调用get_dump()函数将之前dump的model读进来，根据dump的数据顺序计算特征的重要性，因此我们需要知道XGBoost中dump_model()的存储格式，才能进一步分析计算特征重要性的算法。<br>　　以下是调用XGBoost的dump_model()函数得到的模型保存文件，</p>
+<h2 id="3-Model保存格式"><a href="#3-Model保存格式" class="headerlink" title="3. Model保存格式"></a>3. Model保存格式</h2><p>　　在XGBoost中计算特征重要性时，get_score()会调用get_dump()函数将之前dump的model读进来，根据dump的数据顺序计算特征的重要性，因此我们需要知道XGBoost中dump_model()的存储格式，才能进一步分析计算特征重要性的算法。<br>　　以下是调用XGBoost的dump_model()函数得到的模型保存文件，节选部分文件格式如下：<br>    booster[0]:<br>    0:[f34&lt;0.0276504] yes=1,no=2,missing=1<br>        1:[f14&lt;0.015] yes=3,no=4,missing=3<br>            3:[f27&lt;0.074537] yes=7,no=8,missing=7<br>                7:[f17&lt;0.965352] yes=15,no=16,missing=15<br>                    15:[f37&lt;185.5] yes=31,no=32,missing=32<br>                        31:[f27&lt;0.0291986] yes=63,no=64,missing=63<br>                            63:leaf=0.0696373<br>                            64:leaf=0.0530403<br>                        32:[f40&lt;0.0637095] yes=65,no=66,missing=65<br>                            65:leaf=0.0759869<br>                            66:leaf=0.0547368<br>                    16:[f2&lt;0.0247018] yes=33,no=34,missing=34<br>                        33:leaf=0.0609524<br>                        34:leaf=0.0310204<br>                8:[f27&lt;0.170472] yes=17,no=18,missing=18<br>                    17:[f20&lt;142.5] yes=35,no=36,missing=36<br>                        35:[f37&lt;42.5] yes=67,no=68,missing=68<br>                            67:leaf=0.0604082<br>                            68:leaf=0.0124444<br>                        36:[f46&lt;34.5] yes=69,no=70,missing=70<br>                            69:leaf=0.0688372<br>                            70:leaf=0.0485714<br>                    18:[f24&lt;5.5] yes=37,no=38,missing=37<br>                        37:[f37&lt;57] yes=71,no=72,missing=72<br>                            71:leaf=0.0266667<br>                            72:leaf=0.0596825<br>                        38:leaf=-0<br>            4:[f17&lt;0.727834] yes=9,no=10,missing=9<br>                9:[f2&lt;0.0944671] yes=19,no=20,missing=19<br>                    19:[f14&lt;10.2328] yes=39,no=40,missing=40<br>                        39:[f13&lt;17.37] yes=73,no=74,missing=73<br>                            73:leaf=0.0291057<br>                            74:leaf=0.0415597<br>                        40:[f17&lt;0.477226] yes=75,no=76,missing=76<br>                            75:leaf=0.0503631<br>                            76:leaf=0.037828<br>                    20:[f13&lt;6.55986] yes=41,no=42,missing=41<br>                        41:[f16&lt;0.0926244] yes=77,no=78,missing=78<br>                            77:leaf=0.0369591<br>                            78:leaf=0.00794702<br>                        42:[f40&lt;0.0984023] yes=79,no=80,missing=79<br>                            79:leaf=0.0327768<br>                            80:leaf=0.0198658<br>                10:[f2&lt;0.102753] yes=21,no=22,missing=22<br>                    21:[f13&lt;6.97778] yes=43,no=44,missing=43<br>                        43:[f40&lt;0.0288116] yes=81,no=82,missing=82<br>                            81:leaf=0.0229821<br>                            82:leaf=0.0114637<br>                        44:[f8&lt;0.71026] yes=83,no=84,missing=84<br>                            83:leaf=0.0300581<br>                            84:leaf=0.019654<br>                    22:[f13&lt;8.63986] yes=45,no=46,missing=45<br>                        45:[f27&lt;0.458042] yes=85,no=86,missing=85<br>                            85:leaf=0.00643945<br>                            86:leaf=-0.0108543<br>                        46:[f30&lt;0.185616] yes=87,no=88,missing=88<br>                            87:leaf=0.0217512<br>                            88:leaf=0.007981<br>        2:[f43&lt;0.133974] yes=5,no=6,missing=6<br>            5:[f16&lt;0.00150602] yes=11,no=12,missing=12<br>                11:[f50&lt;3.5] yes=23,no=24,missing=23<br>                    23:[f13&lt;12.3315] yes=47,no=48,missing=47<br>                        47:leaf=0.0274627<br>                        48:leaf=0.0583051<br>                    24:[f10&lt;0.074045] yes=49,no=50,missing=50<br>                        49:leaf=0.0498113<br>                        50:leaf=0.0740298<br>                12:[f13&lt;10.2596] yes=25,no=26,missing=25<br>                    25:[f17&lt;0.436699] yes=51,no=52,missing=51<br>                        51:[f30&lt;0.0564709] yes=89,no=90,missing=90<br>                            89:leaf=0.0213011<br>                            90:leaf=0.00544081<br>                        52:[f2&lt;0.087956] yes=91,no=92,missing=92<br>                            91:leaf=0.00636195<br>                            92:leaf=-0.00311229<br>                    26:[f17&lt;0.783196] yes=53,no=54,missing=54<br>                        53:[f73&lt;0.5] yes=93,no=94,missing=93<br>                            93:leaf=0.027602<br>                            94:leaf=0.0136812<br>                        54:[f8&lt;0.957428] yes=95,no=96,missing=95<br>                            95:leaf=0.0127487<br>                            96:leaf=-0.00314199<br>            6:[f17&lt;0.850926] yes=13,no=14,missing=14<br>                13:[f37&lt;40.5] yes=27,no=28,missing=28<br>                    27:[f13&lt;7.84] yes=55,no=56,missing=55<br>                        55:[f16&lt;0.269697] yes=97,no=98,missing=98<br>                            97:leaf=-0.00423077<br>                            98:leaf=-0.0159093<br>                        56:[f40&lt;0.392308] yes=99,no=100,missing=100<br>                            99:leaf=0.0055847<br>                            100:leaf=-0.0127415<br>                    28:[f13&lt;9.60111] yes=57,no=58,missing=57<br>                        57:[f10&lt;0.060285] yes=101,no=102,missing=101<br>                            101:leaf=0.00493423<br>                            102:leaf=-0.00556435<br>                        58:[f17&lt;0.409586] yes=103,no=104,missing=104<br>                            103:leaf=0.0261737<br>                            104:leaf=0.00887003<br>                14:[f13&lt;7.20208] yes=29,no=30,missing=29<br>                    29:[f20&lt;33.5] yes=59,no=60,missing=59<br>                        59:[f22&lt;5.5] yes=105,no=106,missing=105<br>                            105:leaf=-0.030456<br>                            106:leaf=0.00888889<br>                        60:[f27&lt;0.25463] yes=107,no=108,missing=107<br>                            107:leaf=-0.0105936<br>                            108:leaf=-0.0270476<br>                    30:[f43&lt;0.355042] yes=61,no=62,missing=61<br>                        61:[f7&lt;0.8775] yes=109,no=110,missing=109<br>                            109:leaf=0.00220796<br>                            110:leaf=-0.0179359<br>                        62:[f81&lt;0.5] yes=111,no=112,missing=111<br>                            111:leaf=-0.0119825<br>                            112:leaf=-0.04</p>
+<p>　　上述记录为特征重要性算法采用<em>weight</em>的XGBoost的第一棵树（Booser[0]）的存储结构，在模型存储文件中，以Booster[n]来划分第n棵树，以下保存树的结构，0号节点为根节点，每个节点有两个子节点，节点序号按层序技术，即1号和2号节点为根节点0号节点的子节点，相同层的节点有相同缩进，且比父节点多一级缩进。<br>　　在节点行，首先声明节点序号，中括号里写明该节点采用第几个特征（如f34即为训练数据的第34个特征），同时表明特征值划分条件，中括号后分别标明划分区间对用的子节点。</p>
+<h2 id="4-特征重要性源码分析"><a href="#4-特征重要性源码分析" class="headerlink" title="4. 特征重要性源码分析"></a>4. 特征重要性源码分析</h2><p>　　XGBoost的python包所有涉及到特征重要性的函数最后均是调用get_score()函数，其源码如下：<br>    def get_score(self, fmap=’’, importance_type=’weight’):<br>        if importance_type not in [‘weight’, ‘gain’, ‘cover’]:<br>            msg = “importance_type mismatch, got ‘{}’, expected ‘weight’, ‘gain’, or ‘cover’”<br>            raise ValueError(msg.format(importance_type))</p>
+<pre><code># if it&apos;s weight, then omap stores the number of missing values
+if importance_type == &apos;weight&apos;:
+    # do a simpler tree dump to save time
+    trees = self.get_dump(fmap, with_stats=False)
 
+    fmap = {}
+    for tree in trees:
+        for line in tree.split(&apos;\n&apos;):
+            # look for the opening square bracket
+            arr = line.split(&apos;[&apos;)
+            # if no opening bracket (leaf node), ignore this line
+            if len(arr) == 1:
+                continue
+
+            # extract feature name from string between []
+            fid = arr[1].split(&apos;]&apos;)[0].split(&apos;&lt;&apos;)[0]
+
+            if fid not in fmap:
+                # if the feature hasn&apos;t been seen yet
+                fmap[fid] = 1
+            else:
+                fmap[fid] += 1
+
+    return fmap
+
+else:
+    trees = self.get_dump(fmap, with_stats=True)
+
+    importance_type += &apos;=&apos;
+    fmap = {}
+    gmap = {}
+    for tree in trees:
+        for line in tree.split(&apos;\n&apos;):
+            # look for the opening square bracket
+            arr = line.split(&apos;[&apos;)
+            # if no opening bracket (leaf node), ignore this line
+            if len(arr) == 1:
+                continue
+
+            # look for the closing bracket, extract only info within that bracket
+            fid = arr[1].split(&apos;]&apos;)
+
+            # extract gain or cover from string after closing bracket
+            g = float(fid[1].split(importance_type)[1].split(&apos;,&apos;)[0])
+
+            # extract feature name from string before closing bracket
+            fid = fid[0].split(&apos;&lt;&apos;)[0]
+
+            if fid not in fmap:
+                # if the feature hasn&apos;t been seen yet
+                fmap[fid] = 1
+                gmap[fid] = g
+            else:
+                fmap[fid] += 1
+                gmap[fid] += g
+
+    # calculate average value (gain/cover) for each feature
+    for fid in gmap:
+        gmap[fid] = gmap[fid] / fmap[fid]
+
+    return gmap
+</code></pre>
       
     </div>
 
@@ -548,7 +611,7 @@ fmap: str (optional)
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-概述"><span class="nav-text">1. 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-重要性算法"><span class="nav-text">2. 重要性算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Model保存格式"><span class="nav-text">3. Model保存格式</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-概述"><span class="nav-text">1. 概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-重要性算法"><span class="nav-text">2. 重要性算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-Model保存格式"><span class="nav-text">3. Model保存格式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-特征重要性源码分析"><span class="nav-text">4. 特征重要性源码分析</span></a></li></ol></div>
             
           </div>
         </section>
