@@ -90,7 +90,7 @@
 <meta property="og:url" content="http://www.heavengate.site/2016/08/05/xgboost-feature-importance/index.html">
 <meta property="og:site_name" content="Heavengate的小站">
 <meta property="og:description" content="1. 概述　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。　　今天主要通过python的源码解析一下XGBoost的特征重要性">
-<meta property="og:updated_time" content="2016-08-05T01:39:36.000Z">
+<meta property="og:updated_time" content="2016-08-05T01:46:01.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="XGBoost支持的特征重要性算法">
 <meta name="twitter:description" content="1. 概述　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。　　今天主要通过python的源码解析一下XGBoost的特征重要性">
@@ -334,7 +334,7 @@
       
         <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。<br>　　今天主要通过python的源码解析一下XGBoost的特征重要性算法。</p>
 <a id="more"></a>
-<h2 id="2-重要性算法"><a href="#2-重要性算法" class="headerlink" title="2. 重要性算法"></a>2. 重要性算法</h2><p>　　本位的源码解析基于GitHub上的XGBoost源码的python包，链接：<a href="https://github.com/dmlc/xgboost/tree/master/python-package" title="XGBoost-python" target="_blank" rel="external">“XGBoost-python”</a>。源码的xgboost/core.py中get_score()函数头部注释如下。<br>    def get_score(self, fmap=’’, importance_type=’weight’):<br>        “””Get feature importance of each feature.<br>        Importance type can be defined as:<br>            ‘weight’ - the number of times a feature is used to split the data across all trees.<br>            ‘gain’ - the average gain of the feature when it is used in trees<br>            ‘cover’ - the average coverage of the feature when it is used in trees</p>
+<h2 id="2-重要性算法"><a href="#2-重要性算法" class="headerlink" title="2. 重要性算法"></a>2. 重要性算法</h2><p>　　本位的源码解析基于GitHub上的XGBoost源码的python包，链接：<a href="https://github.com/dmlc/xgboost/tree/master/python-package" title="XGBoost-python" target="_blank" rel="external">“XGBoost-python”</a>。源码的xgboost/core.py中get_score()函数头部注释如下。<br>    ```python<br>    def get_score(self, fmap=’’, importance_type=’weight’):<br>        “””Get feature importance of each feature.<br>        Importance type can be defined as:<br>            ‘weight’ - the number of times a feature is used to split the data across all trees.<br>            ‘gain’ - the average gain of the feature when it is used in trees<br>            ‘cover’ - the average coverage of the feature when it is used in trees</p>
 <pre><code>Parameters
 ----------
 fmap: str (optional)
