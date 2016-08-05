@@ -337,23 +337,12 @@
 
       
         
-          
-            <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。<br>　　今天主要通过python的源码解析一下XGBoost的特征重要性算法。</p>
-<h2 id="2-重要性算法"><a href="#2-重要性算法" class="headerlink" title="2. 重要性算法"></a>2. 重要性算法</h2><p>　　本位的源码解析基于GitHub上的XGBoost源码的python包，链接：<a href="https://github.com/dmlc/xgboost/tree/master/python-package" title="XGBoost-python" target="_blank" rel="external">“XGBoost-python”</a>。源码的xgboost/core.py中get_score()函数头部注释如下。<br>    def get_score(self, fmap=’’, importance_type=’weight’):<br>        “””Get feature importance of each feature.<br>        Importance type can be defined as:<br>            ‘weight’ - the number of times a feature is used to split the data across all trees.<br>            ‘gain’ - the average gain of the feature when it is used in trees<br>            ‘cover’ - the average coverage of the feature when it is used in trees</p>
-<pre><code>Parameters
-----------
-fmap: str (optional)
-   The name of feature map file
-&quot;&quot;&quot;
-</code></pre><p>　　从上述代码注释可以看出，XGBoost支持三种特征重要性计算算法如下：</p>
-<ul>
-<li>weight: 特征在所有树中出现的总次数</li>
-<li>gain: 特征在所有树中出现对于模型的平均提升（Gini不纯度增益）</li>
-<li>cover: 特征在所有树中平均覆盖的样本数</li>
-</ul>
-<h2 id="3-Model保存格式"><a href="#3-Model保存格式" class="headerlink" title="3. Model保存格式"></a>3. Model保存格式</h2><p>　　在XGBoost中计算特征重要性时，get_score()会调用get_dump()函数将之前dump的model读进来，根据dump的数据顺序计算特征的重要性，因此我们需要知道XGBoost中dump_model()的存储格式，才能进一步分析计算特征重要性的算法。<br>　　以下是调用XGBoost的dump_model()函数得到的模型保存文件，</p>
-
-          
+          <h2 id="1-概述"><a href="#1-概述" class="headerlink" title="1. 概述"></a>1. 概述</h2><p>　　XGBoost是最近很牛逼的boost实现，在小规模数据和特征的分类模型中有不俗的表现效果，在很多数据挖掘竞赛中也有一席之地。基于C++底层实现的XGBoost有较快的运行速度，同时XGBoost支持常用的数据处理语言的接口，诸如python、Java，R，Scala等，是目前机器学习分类在工业界运用得较多的一种包。<br>　　今天主要通过python的源码解析一下XGBoost的特征重要性算法。</p>
+          <div class="post-more-link text-center">
+            <a class="btn" href="/2016/08/05/xgboost-feature-importance/#more" rel="contents">
+              阅读全文 &raquo;
+            </a>
+          </div>
         
       
     </div>
