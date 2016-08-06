@@ -86,13 +86,13 @@
 
 <meta name="description" content="之前介绍过XGBoost支持的特征重要性算法的原理和实现，传送门：XGBoost支持的特征重要性算法,今天主要介绍一下XGBoost支持的自定义损失函数和boosting的评价函数。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="XGBoost自定义损失函数和评价函数">
+<meta property="og:title" content="XGBoost自定义目标函数和评价函数">
 <meta property="og:url" content="http://www.heavengate.site/2016/08/06/xgboost-cunstom-obj-feval/index.html">
 <meta property="og:site_name" content="Heavengate的小站">
 <meta property="og:description" content="之前介绍过XGBoost支持的特征重要性算法的原理和实现，传送门：XGBoost支持的特征重要性算法,今天主要介绍一下XGBoost支持的自定义损失函数和boosting的评价函数。">
-<meta property="og:updated_time" content="2016-08-05T02:42:40.000Z">
+<meta property="og:updated_time" content="2016-08-06T11:52:30.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="XGBoost自定义损失函数和评价函数">
+<meta name="twitter:title" content="XGBoost自定义目标函数和评价函数">
 <meta name="twitter:description" content="之前介绍过XGBoost支持的特征重要性算法的原理和实现，传送门：XGBoost支持的特征重要性算法,今天主要介绍一下XGBoost支持的自定义损失函数和boosting的评价函数。">
 
 
@@ -116,7 +116,7 @@
 
   <link rel="canonical" href="http://www.heavengate.site/2016/08/06/xgboost-cunstom-obj-feval/"/>
 
-  <title> XGBoost自定义损失函数和评价函数 | Heavengate的小站 </title>
+  <title> XGBoost自定义目标函数和评价函数 | Heavengate的小站 </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -266,7 +266,7 @@
             
             
               
-                XGBoost自定义损失函数和评价函数
+                XGBoost自定义目标函数和评价函数
               
             
           </h1>
@@ -334,7 +334,13 @@
       
         <p>　　之前介绍过XGBoost支持的特征重要性算法的原理和实现，<strong>传送门：</strong><a href="http://heavengate.site/2016/08/05/xgboost-feature-importance/" title="XGBoost支持的特征重要性算法" target="_blank" rel="external">XGBoost支持的特征重要性算法</a>,今天主要介绍一下XGBoost支持的自定义损失函数和boosting的评价函数。</p>
 <a id="more"></a>
-<h2 id="1-自定函数接口"><a href="#1-自定函数接口" class="headerlink" title="1. 自定函数接口"></a>1. 自定函数接口</h2>
+<h2 id="1-自定函数接口"><a href="#1-自定函数接口" class="headerlink" title="1. 自定函数接口"></a>1. 自定函数接口</h2><p>　　XGBoost的train()函数在training.py中定义，其函数签名如下所示。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">train</span><span class="params">(params, dtrain, num_boost_round=<span class="number">10</span>, evals=<span class="params">()</span>, obj=None, feval=None,</span></span></div><div class="line">maximize=False, early_stopping_rounds=None, evals_result=None,</div><div class="line">verbose_eval=True, learning_rates=None, xgb_model=None, callbacks=None):</div><div class="line"><span class="comment"># pylint: disable=too-many-statements,too-many-branches, attribute-defined-outside-init</span></div></pre></td></tr></table></figure></p>
+<p>　　<br>　　train()函数中有两个参数：obj和feval，其中这两个参数均指向函数引用，其默认值均为None，其中obj为目标函数（objective function），feval为评价函数。在train()函数中，obj和feval的默认值均为None，若其为赋值，则调用系统默认的对应函数，当用户自定义则调用用户定义的相应函数。</p>
+<h2 id="2-自定义目标函数"><a href="#2-自定义目标函数" class="headerlink" title="2. 自定义目标函数"></a>2. 自定义目标函数</h2><p>　　根据GBDT训练过程，当每步训练得到一颗数，会调用目标函数得到其梯度残差作为下一棵树拟合的目标，XGBoost在调用obj函数时会传入两个参数：preds和dtrain，其中preds为当前完成训练的所有数对训练的预测值，dtrain为训练集，可以通过dtrain.get_label()获取训练样本的label。同时XGBoost规定目标函数需返回当前preds基于训练label的一阶和二阶梯度。<br>　　由上述目标函数定义规则可以实现基于loglikelihood的目标函数如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment"># user define objective function, given prediction, return gradient and second order gradient</span></div><div class="line"><span class="comment"># this is loglikelihood loss</span></div><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">logregobj</span><span class="params">(preds, dtrain)</span>:</span></div><div class="line">    labels = dtrain.get_label()</div><div class="line">    preds = <span class="number">1.0</span> / (<span class="number">1.0</span> + np.exp(-preds))</div><div class="line">    grad = preds - labels</div><div class="line">    hess = preds * (<span class="number">1.0</span>-preds)</div><div class="line">    <span class="keyword">return</span> grad, hess</div></pre></td></tr></table></figure></p>
+<p>　　上述logregobj()定义中，grad和hess分别为一阶和二阶梯度。函数定义参考链接: <a href="https://github.com/dmlc/xgboost/blob/master/demo/guide-python/custom_objective.py" title="XGBoost自定义目标函数" target="_blank" rel="external">XGBoost自定义目标函数</a>。</p>
+<h2 id="3-自定义评价函数"><a href="#3-自定义评价函数" class="headerlink" title="3. 自定义评价函数"></a>3. 自定义评价函数</h2><p>　　GBDT训练中会每次巡接模型基于验证集评价，此时会调用评价函数，XGBoost的best_iteration和best_score均是基于评价函数得出。XGBoost中对于评价函数调用时同样会传入preds和dvalid，即为验证集和验证集上的预测值，返回值为一个字符串标识自定义评价函数的类型和一个<strong>flaot</strong>类型的fevalerror值表示评价值的大小，其是以error的形式定义，即当此值越大是认为模型效果越差。<br>　　XGBoost官方库中不支持以F1 Score来作为评价函数，用户可同过自定义feval实现，一种实现方式如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">def</span> <span class="title">f1_error</span><span class="params">(preds,dtrain)</span>:</span></div><div class="line">    label = dtrain.get_label()</div><div class="line"></div><div class="line">    preds = <span class="number">1.0</span> / (<span class="number">1.0</span> + np.exp(-preds))</div><div class="line">    pred = [int(i &gt;= <span class="number">0.5</span>) <span class="keyword">for</span> i <span class="keyword">in</span> preds]</div><div class="line">  </div><div class="line">    tp = sum([int(i==<span class="number">1</span> <span class="keyword">and</span> j==<span class="number">1</span>) <span class="keyword">for</span> i,j <span class="keyword">in</span> zip(pred,label)])</div><div class="line">    precision = float(tp)/sum(pred)</div><div class="line">    recall = float(tp)/sum(label)</div><div class="line"></div><div class="line">    <span class="keyword">return</span> <span class="string">'f1-score'</span>, <span class="number">-1</span> * (precision * recall / (precision + recall))</div></pre></td></tr></table></figure></p>
+<h2 id="4-写在后面"><a href="#4-写在后面" class="headerlink" title="4. 写在后面"></a>4. 写在后面</h2><p>　　弄懂自定义函数的接口位置和相应的函数签名与返回值，就可以尝试根据自己的模型需求自定义目标和评价函数，或许会有意向不到效果哦。<br>　　以后有机会再和大家分享XGBoost的训练源码解析。</p>
+
       
     </div>
 
@@ -423,7 +429,7 @@
   <div class="comments" id="comments">
     
       <div class="ds-thread" data-thread-key="2016/08/06/xgboost-cunstom-obj-feval/"
-           data-title="XGBoost自定义损失函数和评价函数" data-url="http://www.heavengate.site/2016/08/06/xgboost-cunstom-obj-feval/">
+           data-title="XGBoost自定义目标函数和评价函数" data-url="http://www.heavengate.site/2016/08/06/xgboost-cunstom-obj-feval/">
       </div>
                                                                 
     
@@ -535,7 +541,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-自定函数接口"><span class="nav-text">1. 自定函数接口</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#1-自定函数接口"><span class="nav-text">1. 自定函数接口</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#2-自定义目标函数"><span class="nav-text">2. 自定义目标函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#3-自定义评价函数"><span class="nav-text">3. 自定义评价函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#4-写在后面"><span class="nav-text">4. 写在后面</span></a></li></ol></div>
             
           </div>
         </section>
